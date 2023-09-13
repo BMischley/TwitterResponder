@@ -1,23 +1,33 @@
-// Initialize the state if needed
 let extensionState = {
     tweetContent: ""
 };
 
-// Listen for messages from the popup or content script
+console.log("Background script running!");
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.type === "TWEET_SELECTED") {
-        extensionState.tweetContent = message.data;
-        // You can also call the OpenAI API here if needed
-        // or handle other long-term operations
+    console.log("Received message:", message);
+
+    if (chrome.runtime.lastError) {
+        console.error(chrome.runtime.lastError);
     }
-});
+    
+    switch(message.type) {
+        case "TWEET_SELECTED":
+            extensionState.tweetContent = message.data;
 
-// If needed, you can set up listeners for other browser events
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (changeInfo.url) {
-        // Check if the URL matches a pattern and perform some action
+            // Respond immediately with a confirmation if needed
+            sendResponse({ status: "Tweet stored" });
+            break;
+            
+        case "FETCH_TWEET":
+            // Respond with the stored tweet content
+            sendResponse({
+                type: "TWEET_SELECTED",
+                data: extensionState.tweetContent
+            });
+            break;
     }
+
+    // Indicate that you wish to send a response asynchronously (important for service workers)
+    return true;
 });
-
-// Other background operations or listeners can be added here
-
